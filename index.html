@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Poll</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="app">
+    <nav class="tabs">
+      <button class="tab active" onclick="showTab('create')">✏️ Create</button>
+      <button class="tab" onclick="showTab('vote')">✅ Vote</button>
+      <button class="tab" onclick="showTab('results')">📊 Results</button>
+    </nav>
+
+    <!-- CREATE -->
+    <section id="tab-create" class="screen active">
+      <h2>Create your poll</h2>
+      <label>Question</label>
+      <input id="poll-title" type="text" placeholder="e.g. Which day works best?">
+      <label>Description (optional)</label>
+      <textarea id="poll-desc" placeholder="Any extra context…"></textarea>
+
+      <label>Answer type</label>
+      <div class="toggle-row">
+        <button class="toggle active" id="btn-multi" onclick="setType('multi')">☑ Multiple choice</button>
+        <button class="toggle" id="btn-single" onclick="setType('single')">◉ Single choice</button>
+      </div>
+
+      <label>Options</label>
+      <div id="options-list"></div>
+      <button class="secondary" onclick="addOption()">+ Add option</button>
+      <button class="primary" onclick="publishPoll()">Publish poll →</button>
+    </section>
+
+    <!-- VOTE -->
+    <section id="tab-vote" class="screen">
+      <h2 id="vote-title"></h2>
+      <p id="vote-desc" class="hint"></p>
+      <p id="vote-hint" class="hint"></p>
+      <div id="vote-options"></div>
+      <div class="name-row">
+        <input id="voter-name" type="text" placeholder="Your name…" oninput="onNameInput()">
+        <button class="primary" onclick="submitVote()">Submit</button>
+      </div>
+      <p id="edit-hint" class="hint edit-hint" style="display:none">
+        You already voted — edit your choices and submit again to update.
+      </p>
+      <div class="link-box">
+        🔗 <span id="https://skoparanova.github.io/meetingPlanner/">MeetingPlanner link</span>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="tab-results" class="screen">
+      <div class="results-header">
+        <h2 id="results-title"></h2>
+        <span id="results-count" class="hint"></span>
+      </div>
+      <div id="results-bars"></div>
+      <h3>All responses</h3>
+      <div id="responses-list"></div>
+      <button class="danger" onclick="clearVotes()">🗑 Reset all votes</button>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
