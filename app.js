@@ -18,6 +18,7 @@ function showTab(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
   document.querySelector(`[onclick="showTab('${name}')"]`).classList.add('active')
   document.getElementById('tab-' + name).classList.add('active')
+  if (name === 'create')  renderCreateCal()
   if (name === 'vote')    renderVote()
   if (name === 'results') renderResults()
 }
@@ -287,5 +288,6 @@ async function clearVotes() {
 }
 
 // ── Init ──────────────────────────────────────────────────────
-renderOptionInputs()
-checkUrlForPoll()
+poll = { title: '', desc: '', options: new Set() }
+createViewDate = new Date()
+renderCreateCal()
