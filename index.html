@@ -30,9 +30,9 @@
         <button class="toggle" id="btn-single" onclick="setType('single')">◉ Single choice</button>
       </div>
 
-      <label>Options</label>
-      <div id="options-list"></div>
-      <button class="secondary" onclick="addOption()">+ Add option</button>
+      <label>Select available dates</label>
+      <div id="create-cal"></div>
+      <p class="hint" id="create-count">0 dates selected</p>
       <button class="primary" onclick="publishPoll()">Publish poll →</button>
     </section>
 
@@ -41,7 +41,8 @@
       <h2 id="vote-title"></h2>
       <p id="vote-desc" class="hint"></p>
       <p id="vote-hint" class="hint"></p>
-      <div id="vote-options"></div>
+      <div id="vote-cal"></div>
+      <p class="hint" id="vote-count">0 dates selected</p>
       <div class="name-row">
         <input id="voter-name" type="text" placeholder="Your name…" oninput="onNameInput()">
         <button class="primary" onclick="submitVote()">Submit</button>

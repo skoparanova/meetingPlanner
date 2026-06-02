@@ -83,43 +83,65 @@ function removeOption(btn) {
   btn.closest('.option-row').remove()
 }
 
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December']
+const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa']
+let calViewDate = new Date()
+let selectedDates = new Set()   // creator's picked dates
+let voteSelections = new Set()  // voter's picked dates
+
+function toKey(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+}
+function todayKey() {
+  const n = new Date()
+  return toKey(n.getFullYear(), n.getMonth(), n.getDate())
+}
+function formatKey(k) {
+  const [y, m, d] = k.split('-')
+  return `${parseInt(d)} ${MONTHS[parseInt(m)-1].slice(0,3)} ${y}`
+}
+
+function buildCalendar(containerId, viewDate, dayCb) {
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month+1, 0).getDate()
+  let html = `<div class="cal-header">
+    <button onclick="navCal('${containerId}',-1)">&#8249;</button>
+    <span>${MONTHS[month]} ${year}</span>
+    <button onclick="navCal('${containerId}',1)">&#8250;</button>
+  </div><div class="cal-grid">`
+  DAYS.forEach(d => html += `<div class="cal-dow">${d}</div>`)
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = toKey(year, month, d)
+    const cls = dayCb(key)
+    html += `<div class="cal-day ${cls}" onclick="dayClick('${containerId}','${key}')">${d}</div>`
+  }
+  html += `</div>`
+  document.getElementById(containerId).innerHTML = html
+}
+
 async function publishPoll() {
   const title = document.getElementById('poll-title').value.trim()
   if (!title) return alert('Enter a question.')
-
-  const options = Array.from(document.querySelectorAll('#options-list input'))
-    .map(i => i.value.trim()).filter(Boolean)
-  if (options.length < 2) return alert('Add at least 2 options.')
-
-  const btn = document.querySelector('#tab-create .primary')
-  btn.textContent = 'Saving…'
-  btn.disabled = true
+  if (selectedDates.size === 0) return alert('Select at least one date.')
 
   const newPoll = {
     id:          generateId(),
     title:       title,
     description: document.getElementById('poll-desc').value.trim(),
-    type:        getSelectedType(),
-    options:     options
+    type:        'multi',
+    options:     [...selectedDates].sort()   // ["2025-07-03", "2025-07-07", ...]
   }
-
   const { data, error } = await db.from('polls').insert(newPoll).select().single()
-
-  btn.textContent = 'Publish poll →'
-  btn.disabled = false
-
   if (error) return showError(error.message)
-
   poll   = data
   pollId = data.id
-
-  // Update the browser URL so the poll link is shareable
-  const newUrl = window.location.origin + window.location.pathname + '?poll=' + pollId
-  window.history.pushState({}, '', newUrl)
-
+  poll.options = new Set(data.options)       // keep as Set for O(1) lookup
   showTab('vote')
 }
-
 // ── Voter ─────────────────────────────────────────────────────
 
 async function renderVote() {
@@ -201,31 +223,15 @@ async function onNameInput() {
 async function submitVote() {
   const name = document.getElementById('voter-name').value.trim()
   if (!name) return alert('Enter your name first.')
+  if (voteSelections.size === 0) return alert('Pick at least one date.')
 
-  const selected = Array.from(document.querySelectorAll('#vote-options .choice-option.selected'))
-    .map(el => parseInt(el.dataset.idx))
-  if (!selected.length) return alert('Pick at least one option.')
-
-  const btn = document.querySelector('.name-row .primary')
-  btn.textContent = 'Saving…'
-  btn.disabled = true
-
-  // upsert: insert if new name, update if name already exists for this poll
-  const { error } = await db.from('responses').upsert(
-    { poll_id: pollId, voter_name: name, selected_options: selected, updated_at: new Date() },
+  await db.from('responses').upsert(
+    { poll_id: pollId, voter_name: name,
+      selected_options: [...voteSelections].sort(),
+      updated_at: new Date() },
     { onConflict: 'poll_id,voter_name' }
   )
-
-  btn.disabled = false
-
-  if (error) { btn.textContent = 'Submit'; return showError(error.message) }
-
-  const isEdit = document.getElementById('edit-hint').style.display !== 'none'
-  btn.textContent = isEdit ? 'Updated ✓' : 'Submitted ✓'
-  document.getElementById('edit-hint').style.display = ''
-  setTimeout(() => btn.textContent = 'Submit', 1800)
 }
-
 // ── Results ───────────────────────────────────────────────────
 
 async function renderResults() {
